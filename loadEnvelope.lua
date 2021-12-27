@@ -201,8 +201,6 @@ local function getProjectPathName()
 end
 
 function loadEnvelope()
---  package.path = ".\\?.lua;C:\\Delphi\\YT\\?.lua;C:\\Delphi\\lua\\lua\\?.lua;C:\\Delphi\\lua\\lua\\?\\?.lua;"
---  local JSON = require("JSON")
                                   -- pitch file in project folder
   local projectName, projectDir = getProjectPathName()
 
