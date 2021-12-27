@@ -202,8 +202,6 @@ local function getProjectPathName()
 end
 
 function process()
---  package.path = ".\\?.lua;C:\\Delphi\\YT\\?.lua;C:\\Delphi\\lua\\lua\\?.lua;C:\\Delphi\\lua\\lua\\?\\?.lua;"
---  local JSON = require("JSON")
                                   -- pitch file in project folder
   local projectName, projectDir = getProjectPathName()
   local fileName = projectDir..projectName.."_pitch.txt"
