@@ -1,0 +1,253 @@
+SCRIPT_TITLE = "RV Load Pitch"
+
+function getClientInfo()
+  return {
+    name = SV:T(SCRIPT_TITLE),
+    author = "Hataori@protonmail.com",
+    versionNumber = 1,
+    minEditorVersion = 65537
+  }
+end
+
+function main()
+  loadPraatPitch()
+  SV:finish()
+end
+
+------------ Praat pitch
+local praatPitch = {} -- class
+
+do
+
+local PitchHeader = {
+{n="File_type", v="File type = \"ooTextFile\"", t="del"},
+{n="Object_class", v="Object class = \"Pitch 1\"", t="del"},
+{t="del"},
+{n="xmin", t="num"},
+{n="xmax", t="num"},
+{n="nx", t="num"},
+{n="dx", t="num"},
+{n="x1", t="num"},
+{n="ceiling", t="num"},
+{n="maxnCandidates", t="num"}
+}
+
+function praatPitch:loadPitch(fnam) -- constructor, short text format
+  local o = {}
+  setmetatable(o, self)
+  self.__index = self
+
+  local data, header = {}, {}
+
+  local fi = io.open(fnam)
+  for i = 1, #PitchHeader do
+    local lin = fi:read("*l")
+    local h = PitchHeader[i]
+
+    if h.v then
+      assert(lin == h.v)
+    elseif h.t == "num" then
+      lin = tonumber(lin)
+    end
+
+    if h.n and h.t ~= "del" then
+      header[h.n] = lin
+    end
+  end
+
+  header["fileType"] = "ooTextFile"
+  header["objectClass"] = "Pitch 1"
+  assert(header.nx)
+
+  for i = 1, header.nx do
+    local pitch = { i = i }
+    pitch.t = (i - 1) * header.dx + header.x1
+
+    local int = fi:read("*n", "*l") -- intensity
+    local cand = fi:read("*n", "*l") -- candidates
+
+    for k = 1, cand do
+      local f = fi:read("*n", "*l")
+      if k == 1 then
+        pitch.f = f
+      end
+      fi:read("*n", "*l")
+    end
+
+    table.insert(data, pitch)
+  end;
+  fi:close()
+
+  o.header = header
+  o.data = data
+  return o
+end
+
+function praatPitch:getPitch(t) -- ret: f0 [Hz]
+  if t < self.data[1].t then return 0 end
+  if t > self.data[#self.data].t then return 0 end
+
+  local ll, rr = 1, #self.data
+  while (rr-ll) > 1 do
+    local cc = math.floor((rr + ll) / 2)
+    if t <= self.data[cc].t then
+      rr = cc
+    else
+      ll = cc
+    end
+  end
+
+  local pf, pt = self.data[ll].f, self.data[rr].f
+  if pf == 0 or pt == 0 then return 0 end
+
+  local pf, pt = math.log(pf), math.log(pt)
+  local fro, til = self.data[ll].t, self.data[rr].t
+
+  return math.exp(pf + (pt - pf) / (til - fro) * (t - fro))
+end
+
+end -- end praat class
+
+local function getProjectPathName()
+  local projectFileName = SV:getProject():getFileName()
+  if not projectFileName then return end
+
+  local projectName, projectDir
+  projectFileName = projectFileName:gsub("\\", "/")
+  projectDir, projectName = projectFileName:match("^(.*/)([^/]+)%.svp$")
+  if not projectDir or not projectName then error(T("project dir or name not found")) end
+
+  return projectName, projectDir
+end
+
+function loadPraatPitch()
+  package.path = ".\\?.lua;C:\\Delphi\\YT\\?.lua;C:\\Delphi\\lua\\lua\\?.lua;C:\\Delphi\\lua\\lua\\?\\?.lua;"
+  local JSON = require("JSON")
+--  local praat = require("praat")
+                                  -- pitch file in project folder
+  local projectName, projectDir = getProjectPathName()
+  local fileName = projectDir..projectName.."_pitch.txt"
+
+  local pitch = praatPitch:loadPitch(fileName)
+
+  local timeAxis = SV:getProject():getTimeAxis()
+  local scope = SV:getMainEditor():getCurrentGroup()
+  local group = scope:getTarget()
+  local am = group:getParameter("pitchDelta") -- pitch automation
+
+--am:removeAll()
+--local fo = io.open("C:/mp3/Mix/SV/script demo/am.txt", "w")
+
+  local notes = {} -- notes indexes
+
+  local noteCnt = group:getNumNotes()
+  if noteCnt == 0 then -- no notes
+    return
+  else
+    local selection = SV:getMainEditor():getSelection()
+    local selectedNotes = selection:getSelectedNotes()
+    if #selectedNotes == 0 then
+      for i = 1, noteCnt do
+        table.insert(notes, i)
+      end
+    else
+      table.sort(selectedNotes, function(noteA, noteB)
+        return noteA:getOnset() < noteB:getOnset()
+      end)
+
+      for _, n in ipairs(selectedNotes) do
+        table.insert(notes, n:getIndexInParent())
+      end
+    end
+  end
+
+  for _, i in ipairs(notes) do
+    local note = group:getNote(i)
+    local npitch = note:getPitch()
+    local ncents = 100 * (npitch - 69) -- A4
+
+    local blOnset, blEnd = note:getOnset(), note:getEnd()
+    am:remove(blOnset, blEnd)
+
+--fo:write("--- "..ncents.." "..blOnset.." "..blEnd.."\n")
+
+    local tons = timeAxis:getSecondsFromBlick(blOnset) -- start time
+    local tend = timeAxis:getSecondsFromBlick(blEnd) -- end time
+
+    local df, f0
+    local t = tons + 0.0005
+    while t < tend - 0.0001 do
+      f0 = pitch:getPitch(t)
+      if f0 > 50 then -- voiced
+        df = 1200 * math.log(f0/440)/math.log(2) - ncents -- delta f0 in cents
+        am:add(timeAxis:getBlickFromSeconds(t), df)
+      end
+      t = t + 0.001 -- time step
+    end
+
+--    if f0 > 0 and (tend - t) > 0.0005 then
+--      am:add(timeAxis:getBlickFromSeconds(tend)-1, df)
+--    end
+
+    if i > 1 then
+      local pnote = group:getNote(i - 1)
+      local pnpitch = pnote:getPitch()
+      local pncents = 100 * (pnpitch - 69) -- A4
+      local pblOnset, pblEnd = pnote:getOnset(), pnote:getEnd()
+      local ptons = timeAxis:getSecondsFromBlick(pblOnset) -- start time
+      local ptend = timeAxis:getSecondsFromBlick(pblEnd) -- end time
+
+      if pblEnd == blOnset then
+        local pts = am:getPoints(blOnset, timeAxis:getBlickFromSeconds(tons + 0.010))
+        local pdif = ncents - pncents
+
+        for _, pt in ipairs(pts) do
+          local b, v = pt[1], pt[2]
+          local t = timeAxis:getSecondsFromBlick(b) - tons
+          local cor = 1 - (1 / (1 + math.exp(-500 * t)))
+          am:add(b, v + pdif * cor)
+--fo:write("=== "..b.."\t"..cor.."\n")
+        end
+      end
+    end
+
+    if i < noteCnt then
+      local pnote = group:getNote(i + 1)
+      local pnpitch = pnote:getPitch()
+      local pncents = 100 * (pnpitch - 69) -- A4
+      local pblOnset, pblEnd = pnote:getOnset(), pnote:getEnd()
+      local ptons = timeAxis:getSecondsFromBlick(pblOnset) -- start time
+      local ptend = timeAxis:getSecondsFromBlick(pblEnd) -- end time
+
+      if blEnd == pblOnset then
+        local pts = am:getPoints(timeAxis:getBlickFromSeconds(tend - 0.010), blEnd - 1)
+        local pdif = pncents - ncents
+
+        for _, pt in ipairs(pts) do
+          local b, v = pt[1], pt[2]
+          local t = timeAxis:getSecondsFromBlick(b) - tend
+          local cor = 1 / (1 + math.exp(-500 * t))
+          am:add(b, v - pdif * cor)
+
+--fo:write("=== "..b.."\t"..cor.."\n")
+
+
+        end
+      end
+    end
+
+    am:simplify(blOnset, blEnd, 0.00005)
+--[[
+local pts = am:getPoints(blOnset, blEnd)
+for _, pt in ipairs(pts) do
+  fo:write(pt[1].."\t"..pt[2].."\n")
+end
+]]
+--if i > 4 then break end
+  end
+
+--fo:close()
+
+
+--  am:simplify(minBlicks, maxBlicks, 0.0003)
+end
