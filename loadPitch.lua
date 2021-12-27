@@ -121,9 +121,6 @@ local function getProjectPathName()
 end
 
 function loadPraatPitch()
-  package.path = ".\\?.lua;C:\\Delphi\\YT\\?.lua;C:\\Delphi\\lua\\lua\\?.lua;C:\\Delphi\\lua\\lua\\?\\?.lua;"
-  local JSON = require("JSON")
---  local praat = require("praat")
                                   -- pitch file in project folder
   local projectName, projectDir = getProjectPathName()
   local fileName = projectDir..projectName.."_pitch.txt"
@@ -134,9 +131,6 @@ function loadPraatPitch()
   local scope = SV:getMainEditor():getCurrentGroup()
   local group = scope:getTarget()
   local am = group:getParameter("pitchDelta") -- pitch automation
-
---am:removeAll()
---local fo = io.open("C:/mp3/Mix/SV/script demo/am.txt", "w")
 
   local notes = {} -- notes indexes
 
@@ -169,8 +163,6 @@ function loadPraatPitch()
     local blOnset, blEnd = note:getOnset(), note:getEnd()
     am:remove(blOnset, blEnd)
 
---fo:write("--- "..ncents.." "..blOnset.." "..blEnd.."\n")
-
     local tons = timeAxis:getSecondsFromBlick(blOnset) -- start time
     local tend = timeAxis:getSecondsFromBlick(blEnd) -- end time
 
@@ -184,10 +176,6 @@ function loadPraatPitch()
       end
       t = t + 0.001 -- time step
     end
-
---    if f0 > 0 and (tend - t) > 0.0005 then
---      am:add(timeAxis:getBlickFromSeconds(tend)-1, df)
---    end
 
     if i > 1 then
       local pnote = group:getNote(i - 1)
@@ -206,7 +194,6 @@ function loadPraatPitch()
           local t = timeAxis:getSecondsFromBlick(b) - tons
           local cor = 1 - (1 / (1 + math.exp(-500 * t)))
           am:add(b, v + pdif * cor)
---fo:write("=== "..b.."\t"..cor.."\n")
         end
       end
     end
@@ -228,26 +215,10 @@ function loadPraatPitch()
           local t = timeAxis:getSecondsFromBlick(b) - tend
           local cor = 1 / (1 + math.exp(-500 * t))
           am:add(b, v - pdif * cor)
-
---fo:write("=== "..b.."\t"..cor.."\n")
-
-
         end
       end
     end
 
     am:simplify(blOnset, blEnd, 0.00005)
---[[
-local pts = am:getPoints(blOnset, blEnd)
-for _, pt in ipairs(pts) do
-  fo:write(pt[1].."\t"..pt[2].."\n")
-end
-]]
---if i > 4 then break end
   end
-
---fo:close()
-
-
---  am:simplify(minBlicks, maxBlicks, 0.0003)
 end
