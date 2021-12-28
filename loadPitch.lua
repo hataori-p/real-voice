@@ -132,6 +132,14 @@ function loadPraatPitch()
   local group = scope:getTarget()
   local am = group:getParameter("pitchDelta") -- pitch automation
 
+  scope:setVoice({
+        tF0Left = 0,
+        tF0Right = 0,
+        dF0Left = 0,
+        dF0Right = 0,
+        dF0Vbr = 0
+  })
+  
   local notes = {} -- notes indexes
 
   local noteCnt = group:getNumNotes()
