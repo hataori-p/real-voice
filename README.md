@@ -19,10 +19,13 @@ Everything is tested only on Windows, but it should work on other platforms wher
 - You can open the scripts folder from MainMenu / Scripts / Open Scripts folder command and rename real-voice-main to whatever you want, eg. realVoice
 
 After starting SynthV Studio (or rescanning scripts) you should have these scripts in the Scripts Menu:
+- RV Filter Pitch (new)
 - RV Load Envelope
-- RV Load Pitch
-- RV Quantize Pitch
-- RV Split Note
+- RV Load Pitch (update v2)
+- RV Notes from TextGrid (new)
+- RV Quantize Pitch (update v2)
+- RV Randomize Onsets (new)
+- RV Split Note (update v2)
 
 I recommend to set up a keyboard shortcuts for RV Load Pitch (I use alt-X) and for RV Split Note (alt-C)
 
