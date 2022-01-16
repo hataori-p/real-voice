@@ -361,7 +361,7 @@ local function process()
     note:setTimeRange(nt.st, nt.en - nt.st)
     local pitch = nt.pitch
     if not pitch then
-      pitch = notes[i + 1].pitch or notes[i - 1].pitch or 69
+      pitch = (i < #notes and notes[i + 1].pitch) or (i > 1 and notes[i - 1].pitch) or 69
     end
     note:setPitch(pitch)
     note:setLyrics(nt.lyr)
