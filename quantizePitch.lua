@@ -1,5 +1,14 @@
 SCRIPT_TITLE = "RV Quantize Pitch"
 
+function getClientInfo()
+  return {
+    name = SV:T(SCRIPT_TITLE),
+    author = "Hataori@protonmail.com",
+    versionNumber = 2,
+    minEditorVersion = 65537
+  }
+end
+
 local NOTES = {'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'}
 
 local SCALES = {
@@ -47,15 +56,6 @@ local inputForm = {
       }
     }
   }
-
-function getClientInfo()
-  return {
-    name = SV:T(SCRIPT_TITLE),
-    author = "Hataori@protonmail.com",
-    versionNumber = 1,
-    minEditorVersion = 65537
-  }
-end
 
 ------------ Praat pitch
 local praatPitch = {} -- class
@@ -196,7 +196,7 @@ local function getProjectPathName()
   local projectName, projectDir
   projectFileName = projectFileName:gsub("\\", "/")
   projectDir, projectName = projectFileName:match("^(.*/)([^/]+)%.svp$")
-  if not projectDir or not projectName then error(T("project dir or name not found")) end
+  if not projectDir or not projectName then error(SV:T("project dir or name not found")) end
 
   return projectName, projectDir
 end
@@ -346,6 +346,9 @@ function process()
         t = t + 0.001 -- time step
       end
 
+      local tempo = timeAxis:getTempoMarkAt(blOnset)
+      local compensation = tempo.bpm * 6.3417442
+
       if i > 1 then
         local pnote = group:getNote(i - 1)
         local pnpitch = pnote:getPitch()
@@ -361,7 +364,7 @@ function process()
           for _, pt in ipairs(pts) do
             local b, v = pt[1], pt[2]
             local t = timeAxis:getSecondsFromBlick(b) - tons
-            local cor = 1 - (1 / (1 + math.exp(-500 * t)))
+            local cor = 1 - (1 / (1 + math.exp(-compensation * t)))
             am:add(b, v + pdif * cor)
           end
         end
@@ -382,13 +385,13 @@ function process()
           for _, pt in ipairs(pts) do
             local b, v = pt[1], pt[2]
             local t = timeAxis:getSecondsFromBlick(b) - tend
-            local cor = 1 / (1 + math.exp(-500 * t))
+            local cor = 1 / (1 + math.exp(-compensation * t))
             am:add(b, v - pdif * cor)
           end
         end
       end
 
-      am:simplify(blOnset, blEnd, 0.00005)
+      am:simplify(blOnset, blEnd, 0.0001)
     end
 
   end
