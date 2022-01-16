@@ -4,7 +4,7 @@ function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "Hataori@protonmail.com",
-    versionNumber = 1,
+    versionNumber = 2,
     minEditorVersion = 65537
   }
 end
@@ -139,7 +139,7 @@ function loadPraatPitch()
         dF0Right = 0,
         dF0Vbr = 0
   })
-  
+
   local notes = {} -- notes indexes
 
   local noteCnt = group:getNumNotes()
@@ -185,6 +185,9 @@ function loadPraatPitch()
       t = t + 0.001 -- time step
     end
 
+    local tempo = timeAxis:getTempoMarkAt(blOnset)
+    local compensation = tempo.bpm * 6.3417442
+
     if i > 1 then
       local pnote = group:getNote(i - 1)
       local pnpitch = pnote:getPitch()
@@ -200,7 +203,7 @@ function loadPraatPitch()
         for _, pt in ipairs(pts) do
           local b, v = pt[1], pt[2]
           local t = timeAxis:getSecondsFromBlick(b) - tons
-          local cor = 1 - (1 / (1 + math.exp(-500 * t)))
+          local cor = 1 - (1 / (1 + math.exp(-compensation * t)))
           am:add(b, v + pdif * cor)
         end
       end
@@ -221,12 +224,12 @@ function loadPraatPitch()
         for _, pt in ipairs(pts) do
           local b, v = pt[1], pt[2]
           local t = timeAxis:getSecondsFromBlick(b) - tend
-          local cor = 1 / (1 + math.exp(-500 * t))
+          local cor = 1 / (1 + math.exp(-compensation * t))
           am:add(b, v - pdif * cor)
         end
       end
     end
 
-    am:simplify(blOnset, blEnd, 0.00005)
+    am:simplify(blOnset, blEnd, 0.0001)
   end
 end
