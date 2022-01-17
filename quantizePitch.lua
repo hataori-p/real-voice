@@ -41,7 +41,7 @@ local inputForm = {
       {
         name = "scale", type = "ComboBox",
         label = SV:T("Scale (Maj/Min)"),
-        choices = {"chroma", "C/a", "C#/Db/bb", "D/b", "Eb/c", "E/c#", "F/d", "F#/Gb/d#/eb", "G/e", "Ab/f", "Ab/f", "Bb/g", "B/Cb/g#"},
+        choices = {"chroma", "C/a", "C#/Db/bb", "D/b", "Eb/c", "E/c#", "F/d", "F#/Gb/d#/eb", "G/e", "Ab/f", "A/f#", "Bb/g", "B/Cb/g#"},
         default = 0
       },
       {
