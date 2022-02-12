@@ -94,7 +94,7 @@ function process()
     configFileName = projectFileName..".RVgrowl.cfg"
   end
             -- read config
-  if configFileName ~= nil then
+  if configFileName then
     local fi = io.open(configFileName)
     if fi then
       local txt = fi:read("*a")
@@ -138,7 +138,7 @@ function process()
   local slRand = dlgResult.answers.slRand
   local chkEnv = dlgResult.answers.chkEnv
               -- save configuration
-  if configFileName ~= nil then
+  if configFileName then
     local fo = io.open(configFileName, "w")
     fo:write("{\n")
     fo:write("baseFrequency="..slFreq..",\n")
