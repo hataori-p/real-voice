@@ -86,23 +86,15 @@ function main()
   SV:finish()
 end
 
-local function getProjectPathName()
-  local projectFileName = SV:getProject():getFileName()
-  if not projectFileName then return end
-
-  local projectName, projectDir
-  projectFileName = projectFileName:gsub("\\", "/")
-  projectDir, projectName = projectFileName:match("^(.*/)([^/]+)%.svp$")
-  if not projectDir or not projectName then error(SV:T("project dir or name not found")) end
-
-  return projectName, projectDir
-end
-
 function process()
-  local projectName, projectDir = getProjectPathName()
-  local configFileName = projectDir.."RTgrowl.txt"
+  local projectFileName = SV:getProject():getFileName()
+  local configFileName = nil
+  if projectFileName ~= "" then
+    -- projectFileName may be nil if file is not saved or running in VST
+    configFileName = projectFileName..".RVgrowl.cfg"
+  end
             -- read config
-  do
+  if configFileName ~= nil then
     local fi = io.open(configFileName)
     if fi then
       local txt = fi:read("*a")
@@ -146,7 +138,7 @@ function process()
   local slRand = dlgResult.answers.slRand
   local chkEnv = dlgResult.answers.chkEnv
               -- save configuration
-  do
+  if configFileName ~= nil then
     local fo = io.open(configFileName, "w")
     fo:write("{\n")
     fo:write("baseFrequency="..slFreq..",\n")
