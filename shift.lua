@@ -22,9 +22,18 @@ local inputForm = {
         default = 0
       },
       {
-        name = "tbAmount", type = "TextBox",
+        name = "slAmount", type = "Slider",
         label = "How much to shift",
-        default = "1"
+        format = "%1.0f",
+        minValue = 0,
+        maxValue = 16,
+        interval = 1,
+        default = 0
+      },
+      {
+        name = "tbAmount", type = "TextBox",
+        label = "How much to shift (can use floating point numbers)",
+        default = "0"
       }
     }
   }
@@ -85,10 +94,11 @@ function process()
                              -- show dialog
   local dlgResult = SV:showCustomDialog(inputForm)
   local amount = tonumber(dlgResult.answers.tbAmount)
-  if not dlgResult.status or amount == 0 then return end -- cancel pressed or no shift
+  local amountSlider = tonumber(dlgResult.answers.slAmount)
+  if not dlgResult.status or (amount + amountSlider) == 0 then return end -- cancel pressed or no shift
 
   local direction = 1 - 2 * dlgResult.answers.cbDirection -- 1 forward, -1 backward
-  amount = amount * direction
+  amount = (amount + amountSlider) * direction
 
   local timeConvert, shift = false, 0
   local unit = dlgResult.answers.cbUnit
