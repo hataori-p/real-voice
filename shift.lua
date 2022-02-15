@@ -42,7 +42,7 @@ function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "Hataori@protonmail.com",
-    versionNumber = 1,
+    versionNumber = 2,
     minEditorVersion = 65537
   }
 end
@@ -122,6 +122,12 @@ function process()
     else
       newOnset_b = onset_b + shift
     end
+
+    if newOnset_b < 0 then
+      SV:showMessageBox("Error!", "You are about to move notes before zero time!\nFirst make a room by selecting all notes and shifting them forward.")
+      return
+    end
+
     note:setOnset(newOnset_b)
   end
                   -- correction of short pauses and overlap due to rounding
@@ -140,32 +146,43 @@ function process()
 
   for _, par in ipairs(paramTypeNames) do
     local am = group:getParameter(par) -- automation track
-
+                         -- save points to list
     local points = am:getPoints(minTime_b, maxTime_b)
+                         -- add boundary points
+    local startval = am:get(minTime_b)
+    table.insert(points, 1, {minTime_b, startval})
 
-    if amount > 0 then
-      local endval = am:get(maxTime_b)
-      table.insert(points, {maxTime_b, endval})
-
-      if timeConvert then
-        local maxTime = timeAxis:getSecondsFromBlick(maxTime_b)
-        am:remove(maxTime_b, timeAxis:getBlickFromSeconds(maxTime + amount))
-      else
-        am:remove(maxTime_b, maxTime_b + shift)
-      end
-    else
-      local startval = am:get(minTime_b)
-      table.insert(points, 1, {minTime_b, startval})
-
-      if timeConvert then
-        local minTime = timeAxis:getSecondsFromBlick(minTime_b)
-        am:remove(minTime_b + timeAxis:getBlickFromSeconds(minTime + amount), minTime_b)
-      else
-        am:remove(minTime_b + shift, minTime_b)
-      end
-    end
+    local endval = am:get(maxTime_b)
+    table.insert(points, {maxTime_b, endval})
+                        -- remove from track and add boundaries back
     am:remove(minTime_b, maxTime_b)
+    am:add(minTime_b, startval)
+    am:add(maxTime_b, endval)
+                       -- target times
+    local newStartTime_b, newEndTime_b
 
+    if timeConvert then
+      local minTime = timeAxis:getSecondsFromBlick(minTime_b)
+      newStartTime_b = timeAxis:getBlickFromSeconds(minTime + amount)
+
+      local maxTime = timeAxis:getSecondsFromBlick(maxTime_b)
+      newEndTime_b = timeAxis:getBlickFromSeconds(maxTime + amount)
+    else
+      newStartTime_b, newEndTime_b = minTime_b + shift, maxTime_b + shift
+    end
+
+    startval = am:get(newStartTime_b - 1)
+    endval = am:get(newEndTime_b + 1)
+    am:remove(newStartTime_b, newEndTime_b)
+
+    if amount < 0 or (amount > 0 and newStartTime_b > maxTime_b) then
+      am:add(newStartTime_b - 1, startval)
+    end
+
+    if amount > 0 or (amount < 0 and newEndTime_b < minTime_b) then
+      am:add(newEndTime_b + 1, endval)
+    end
+                       -- place points
     for _, pt in ipairs(points) do
       if timeConvert then
         local onset = timeAxis:getSecondsFromBlick(pt[1])
