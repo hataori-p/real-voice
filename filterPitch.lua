@@ -4,7 +4,6 @@ function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "hataori@protonmail.com",
-	category = "Real Voice",
     versionNumber = 1,
     minEditorVersion = 65537
   }
