@@ -38,10 +38,6 @@ local function getProjectPathName()
 end
 
 local function process()
-  package.path = ".\\?.lua;C:\\Delphi\\YT\\?.lua;C:\\Delphi\\lua\\lua\\?.lua;C:\\Delphi\\lua\\lua\\?\\?.lua;"
-  local JSON = require("JSON")
-
-
   local dlgResult = SV:showCustomDialog(inputForm)
   if not dlgResult.status then return end -- cancel pressed
                           -- output file
