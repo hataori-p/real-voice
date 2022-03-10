@@ -1,5 +1,5 @@
 # real-voice
-Scripts for working with a real voice in Synthesizer V
+Scripts for working with a real voice in Synthesizer V Studio Pro
 
 ## What is this good for
 Usually "tuning" a voice in a vocal synthesizer means drawing some pitch curve over MIDI notes. The timing of the notes is seldom changed.
