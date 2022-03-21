@@ -4,8 +4,8 @@ function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "hataori@protonmail.com",
-	category = "Real Voice",
-    versionNumber = 1,
+    category = "Real Voice",
+    versionNumber = 2,
     minEditorVersion = 65537
   }
 end
@@ -334,9 +334,14 @@ local function process()
     local left, right = ifp[i - 1] or ifp[j + 1], ifp[j + 1] or ifp[i - 1]
     assert(left and right)
 
-    for k = i, j do
-      local pf, pt = math.log(left), math.log(right)
-      ifp[k] = math.exp(pf + (pt - pf) / (j - i + 2) * (k - i + 1))
+    if left > 0 and right > 0 then
+      for k = i, j do
+        local pf, pt = math.log(left), math.log(right)
+        ifp[k] = math.exp(pf + (pt - pf) / (j - i + 2) * (k - i + 1))
+        if j + 1 - i <= 2 then -- short unvoiced -> voiced
+          fp[k] = ifp[k]
+        end
+      end
     end
 
     i = j + 1
