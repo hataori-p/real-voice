@@ -327,6 +327,12 @@ local function process()
   local notes, lastNote = {}, nil
   for _, int in ipairs(grid.data) do
     local frb, frt = timeAxis:getBlickFromSeconds(int.fr), timeAxis:getBlickFromSeconds(int.to)
+                       -- normalize spaces
+    if int.tx then
+      int.tx = int.tx:match("^%s*(.-)%s*$") or ""
+    else
+      int.tx = ""
+    end
 
     if int.tx and int.tx:find("!", 1, true) then
       veam:add(frb, 1)
@@ -334,7 +340,6 @@ local function process()
         lastNote.en = frt
       end
     elseif int.tx and int.tx ~= "" then
-      int.tx = int.tx:match("^%s*(.-)%s*$")
       local txt, pit = int.tx:match("^(.-)%s*%(([%d-]+)%)$")
 
       if pit then -- pitch encoded in textGrid
@@ -370,6 +375,8 @@ local function process()
           veam:add(frb, 1)
         end
       end -- ind if pitch
+    else
+      lastNote = nil
     end -- if int.tx
   end -- for
                            -- remove old notes
