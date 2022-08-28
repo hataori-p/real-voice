@@ -140,26 +140,30 @@ function process()
   local chkEnv = dlgResult.answers.chkEnv
               -- save configuration
   if configFileName then
-    local fo = io.open(configFileName, "w")
-    fo:write("{\n")
-    fo:write("baseFrequency="..slFreq..",\n")
-    if chkVibr then
-      fo:write("vibratoMode=1,\n")
+    local fo, errMessage = io.open(configFileName, "w")
+    if fo then
+      fo:write("{\n")
+      fo:write("baseFrequency="..slFreq..",\n")
+      if chkVibr then
+        fo:write("vibratoMode=1,\n")
+      else
+        fo:write("vibratoMode=0,\n")
+      end
+      fo:write("pitchDepth="..slPitch..",\n")
+      fo:write("loudnessDepth="..slLoud..",\n")
+      fo:write("tensionDepth="..slTens..",\n")
+      fo:write("genderDepth="..slGend..",\n")
+      fo:write("randomPhase="..slRand..",\n")
+      if chkEnv then
+        fo:write("useEnvelope=1,\n")
+      else
+        fo:write("useEnvelope=0,\n")
+      end
+      fo:write("}\n")
+      fo:close()
     else
-      fo:write("vibratoMode=0,\n")
+      SV:showMessageBox(SV:T("Warning"), SV:T("Unable to save configuration, check if there are any non-English characters in the path").."\n"..errMessage)
     end
-    fo:write("pitchDepth="..slPitch..",\n")
-    fo:write("loudnessDepth="..slLoud..",\n")
-    fo:write("tensionDepth="..slTens..",\n")
-    fo:write("genderDepth="..slGend..",\n")
-    fo:write("randomPhase="..slRand..",\n")
-    if chkEnv then
-      fo:write("useEnvelope=1,\n")
-    else
-      fo:write("useEnvelope=0,\n")
-    end
-    fo:write("}\n")
-    fo:close()
   end
            -- vibrato mode
   if chkVibr then slFreq = slFreq / 10 end

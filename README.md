@@ -36,3 +36,6 @@ It is available for many platforms.
 ## Demo videos
 For the instructions how to use these scripts refer to my demonstration videos on Youtube
 [playlist](https://youtube.com/playlist?list=PLHA_yIumhQPDJ3PULhXeE-gypioT-eear)
+
+## Known Issues
+Unable to load files whose paths contain any non-English characters (e.g. Chinese, Korean, Japanese).
