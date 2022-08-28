@@ -98,31 +98,37 @@ function process()
   if configFileName then
     local fi = io.open(configFileName)
     if fi then
+      local loadSuccessful = true
       local txt = fi:read("*a")
       fi:close()
 
-      local conf = assert(load("return"..txt))()
-      assert(conf, SV:T("config format error"))
-      if type(conf) ~= "table" then
-        error(SV:T("config format error"))
+      local conf = load("return"..txt)()
+      if (conf == false) then
+        SV:showMessageBox(SV:T("Warning"), SV:T("Cannot load config file"))
+        loadSuccessful = false
+      elseif type(conf) ~= "table" then
+        SV:showMessageBox(SV:T("Warning"), SV:T("Config format error"))
+        loadSuccessful = false
       end
               -- dialog defaults from config
-      local wg = inputForm.widgets
-      wg[1].default = conf.baseFrequency or 50
-      if conf.vibratoMode and conf.vibratoMode > 0 then
-        wg[2].default = true
-      else
-        wg[2].default = false
-      end
-      wg[3].default = conf.pitchDepth or 0
-      wg[4].default = conf.loudnessDepth or 0
-      wg[5].default = conf.tensionDepth or 0.0
-      wg[6].default = conf.genderDepth or 0.0
-      wg[7].default = conf.randomPhase or 0.0
-      if conf.useEnvelope and conf.useEnvelope > 0 then
-        wg[8].default = true
-      else
-        wg[8].default = false
+      if loadSuccessful then
+        local wg = inputForm.widgets
+        wg[1].default = conf.baseFrequency or 50
+        if conf.vibratoMode and conf.vibratoMode > 0 then
+          wg[2].default = true
+        else
+          wg[2].default = false
+        end
+        wg[3].default = conf.pitchDepth or 0
+        wg[4].default = conf.loudnessDepth or 0
+        wg[5].default = conf.tensionDepth or 0.0
+        wg[6].default = conf.genderDepth or 0.0
+        wg[7].default = conf.randomPhase or 0.0
+        if conf.useEnvelope and conf.useEnvelope > 0 then
+          wg[8].default = true
+        else
+          wg[8].default = false
+        end
       end
     end
   end
