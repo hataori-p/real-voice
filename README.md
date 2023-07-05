@@ -19,13 +19,14 @@ Everything is tested only on Windows, but it should work on other platforms wher
 - You can open the scripts folder from MainMenu / Scripts / Open Scripts folder command and rename real-voice-main to whatever you want, eg. realVoice
 
 After starting SynthV Studio (or rescanning scripts) you should have these scripts in the Scripts Menu:
-- RV Filter Pitch (new)
-- RV Load Envelope
-- RV Load Pitch (update v2)
-- RV Notes from TextGrid (new)
-- RV Quantize Pitch (update v2)
-- RV Randomize Onsets (new)
-- RV Split Note (update v2)
+- RV Filter Pitch (obsolete - use Praat's Convert / Smooth function)
+- RV Load Envelope (obsolete, create separate notes for consonants)
+- RV Load Pitch (update v3)
+- RV Notes from TextGrid (update v3, exclamation mark functionality removed)
+- RV Notes to TextGrid (v1)
+- RV Quantize Pitch (v2)
+- RV Randomize Onsets (v1)
+- RV Split Note (update v3)
 
 I recommend to set up a keyboard shortcuts for RV Load Pitch (I use alt-X) and for RV Split Note (alt-C)
 
