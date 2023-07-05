@@ -1,12 +1,15 @@
 SCRIPT_TITLE = "RV Load Pitch"
+-- Ver.1 - loads pitch from Pratt pitch object into pitch deviation automation track
+-- Ver.2 - minor changes
+-- Ver.3 - refactored pitch dev timing to consume less resources
 
 function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "Hataori@protonmail.com",
-	category = "Real Voice",
-    versionNumber = 2,
-    minEditorVersion = 65537
+    category = "Real Voice",
+    versionNumber = 3,
+    minEditorVersion = 0x010600
   }
 end
 
@@ -41,6 +44,7 @@ function praatPitch:loadPitch(fnam) -- constructor, short text format
   local data, header = {}, {}
 
   local fi = io.open(fnam)
+  assert(fi, "cannot open pitch file")
   for i = 1, #PitchHeader do
     local lin = fi:read("*l")
     local h = PitchHeader[i]
@@ -58,7 +62,7 @@ function praatPitch:loadPitch(fnam) -- constructor, short text format
 
   header["fileType"] = "ooTextFile"
   header["objectClass"] = "Pitch 1"
-  assert(header.nx)
+  assert(header.nx, "no nx in pitch file")
 
   for i = 1, header.nx do
     local pitch = { i = i }
@@ -66,6 +70,7 @@ function praatPitch:loadPitch(fnam) -- constructor, short text format
 
     local int = fi:read("*n", "*l") -- intensity
     local cand = fi:read("*n", "*l") -- candidates
+    assert(cand, "no candidates in pitch file")
 
     for k = 1, cand do
       local f = fi:read("*n", "*l")
@@ -116,17 +121,23 @@ local function getProjectPathName()
   local projectName, projectDir
   projectFileName = projectFileName:gsub("\\", "/")
   projectDir, projectName = projectFileName:match("^(.*/)([^/]+)%.svp$")
-  if not projectDir or not projectName then error(T("project dir or name not found")) end
-
   return projectName, projectDir
 end
 
 function loadPraatPitch()
                                   -- pitch file in project folder
   local projectName, projectDir = getProjectPathName()
-  local fileName = projectDir..projectName.."_pitch.txt"
+  if not projectDir or not projectName then
+    SV:showMessageBox(SV:T("Error"), SV:T("Project dir or name not found, save your project first"))
+    return
+  end
+  local fileName = projectDir..projectName.."_Pitch.txt"
 
   local pitch = praatPitch:loadPitch(fileName)
+  if not pitch then
+    SV:showMessageBox(SV:T("Error"), SV:T("Wrong pitch file format, save it as SHORT text"))
+    return
+  end
 
   local timeAxis = SV:getProject():getTimeAxis()
   local scope = SV:getMainEditor():getCurrentGroup()
@@ -175,7 +186,12 @@ function loadPraatPitch()
     local tons = timeAxis:getSecondsFromBlick(blOnset) -- start time
     local tend = timeAxis:getSecondsFromBlick(blEnd) -- end time
 
+    local tempo = timeAxis:getTempoMarkAt(blOnset)
+    local compensation = tempo.bpm * 6.3417442
+    local t_step = math.max(SV:blick2Seconds(SV:quarter2Blick(1/64), tempo.bpm), 0.01)
+
     local df, f0
+    local o10, e10 = tons + 0.010, tend - 0.010
     local t = tons + 0.0005
     while t < tend - 0.0001 do
       f0 = pitch:getPitch(t)
@@ -183,19 +199,22 @@ function loadPraatPitch()
         df = 1200 * math.log(f0/440)/math.log(2) - ncents -- delta f0 in cents
         am:add(timeAxis:getBlickFromSeconds(t), df)
       end
-      t = t + 0.001 -- time step
-    end
 
-    local tempo = timeAxis:getTempoMarkAt(blOnset)
-    local compensation = tempo.bpm * 6.3417442
+      if t <= o10 or t >= e10 then
+        t = t + 0.001
+      else
+        t = t + t_step -- time step
+        if t >= e10 then
+          t = e10
+        end
+      end
+    end
 
     if i > 1 then
       local pnote = group:getNote(i - 1)
       local pnpitch = pnote:getPitch()
       local pncents = 100 * (pnpitch - 69) -- A4
       local pblOnset, pblEnd = pnote:getOnset(), pnote:getEnd()
-      local ptons = timeAxis:getSecondsFromBlick(pblOnset) -- start time
-      local ptend = timeAxis:getSecondsFromBlick(pblEnd) -- end time
 
       if pblEnd == blOnset then
         local pts = am:getPoints(blOnset, timeAxis:getBlickFromSeconds(tons + 0.010))
@@ -215,8 +234,6 @@ function loadPraatPitch()
       local pnpitch = pnote:getPitch()
       local pncents = 100 * (pnpitch - 69) -- A4
       local pblOnset, pblEnd = pnote:getOnset(), pnote:getEnd()
-      local ptons = timeAxis:getSecondsFromBlick(pblOnset) -- start time
-      local ptend = timeAxis:getSecondsFromBlick(pblEnd) -- end time
 
       if blEnd == pblOnset then
         local pts = am:getPoints(timeAxis:getBlickFromSeconds(tend - 0.010), blEnd - 1)
