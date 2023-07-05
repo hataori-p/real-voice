@@ -1,13 +1,14 @@
 SCRIPT_TITLE = "RV Split Note"
 -- Ver.1 - splits a note at cursor, requantizes the new notes and reloads surrounding pitch devs
--- Ver.2 - refactored pitch dev timing to consume less resources
+-- Ver.3 - minor changes
+-- Ver.3 - refactored pitch dev timing to consume less resources
 
 function getClientInfo()
   return {
     name = SV:T(SCRIPT_TITLE),
     author = "Hataori@protonmail.com",
     category = "Real Voice",
-    versionNumber = 2,
+    versionNumber = 3,
     minEditorVersion = 0x010800
   }
 end
